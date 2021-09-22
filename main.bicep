@@ -11,9 +11,21 @@ param tags object = {
 }
 param vnetAddressPrefix string
 param snetAddressPrefix string
+param snetName string
 param hubVnetName string
 param hubVnetRGName string
 param hubVnetSubId string
+param dnsServer string
+param localAdminName string
+@secure()
+param localAdminPassword string
+param vmSize string
+param licenseType string
+param domainToJoin string
+param domainUserName string
+@secure()
+param domainPassword string
+param ouPath string
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-01-01' = {
   name: 'rg-${name}'
@@ -41,6 +53,8 @@ module virtualNetwork 'modules/virtualNetwork.bicep' = {
     location: location
     vnetAddressPrefix: vnetAddressPrefix
     snetAddressPrefix: snetAddressPrefix
+    snetName: snetName
+    dnsServer: dnsServer
     networkSecurityGroupId: networkSecurityGroup.outputs.id
   }
 }
@@ -68,5 +82,60 @@ module virtualNetworkPeering2 'modules/virtualNetworkPeering.bicep' = {
     remoteVnetSubscriptionId: hubVnetSubId
     vnetName: virtualNetwork.outputs.name
     vnetRsourceGroupName: resourceGroup.name
+  }
+}
+
+module hostPool 'modules/hostPools.bicep' = {
+  scope: resourceGroup
+  name: 'hostPoolDeploy'
+  params: {
+    name: name
+    tags: tags
+    location: location
+    hostPoolType: 'Pooled'
+  }
+}
+
+module applicationGroup 'modules/applicationGroup.bicep' = {
+  scope: resourceGroup
+  name: 'applicationGroupDeploy'
+  params: {
+    name: name
+    tags: tags
+    location: location
+    hostPoolId: hostPool.outputs.id
+  }
+}
+
+module workspace 'modules/workspace.bicep' = {
+  scope: resourceGroup
+  name: 'workspaceDeploy'
+  params: {
+    name: name
+    tags: tags
+    location: location
+    applicationGroupId: applicationGroup.outputs.id
+  }
+}
+
+module sessionHost 'modules/sessionHost.bicep' = {
+  scope: resourceGroup
+  name: 'sessionHostDeploy'
+  params: {
+    name: name
+    tags: tags
+    location: location
+    localAdminName: localAdminName
+    localAdminPassword: localAdminPassword
+    subnetName: snetName
+    vmSize: vmSize
+    licenseType: licenseType
+    domainToJoin: domainToJoin
+    domainPassword: domainPassword
+    domainUserName: domainUserName
+    ouPath: ouPath
+    hostPoolName: hostPool.outputs.name
+    hostPoolToken: hostPool.outputs.token
+    vnetId: virtualNetwork.outputs.id
   }
 }

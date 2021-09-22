@@ -3,7 +3,9 @@ param tags object
 param location string
 param vnetAddressPrefix string
 param snetAddressPrefix string
+param snetName string
 param networkSecurityGroupId string
+param dnsServer string
 
 //https://docs.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks?tabs=bicep
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
@@ -16,9 +18,14 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         vnetAddressPrefix
       ]
     }
+    dhcpOptions: {
+      dnsServers: [
+        dnsServer
+      ]
+    }
     subnets: [
       {
-        name: 'ComputeSubnet'
+        name: snetName
         properties: {
           addressPrefix: snetAddressPrefix
           networkSecurityGroup: {
