@@ -29,13 +29,14 @@ az bicep build --file main.bicep
 ## Flex your bicep
 
 ```sh
-# having some fun with petnames
+# use this if you want to have some fun with petnames
 # http://manpages.ubuntu.com/manpages/bionic/man1/petname.1.html
 sudo apt-get install petname
 name=$(petname --words 2 --separator "")
-#name=demo-avd
+echo $name
 
 # change these as needed
+name=<YOUR_VALUE>
 location=<YOUR_VALUE>
 vnetAddressPrefix=<YOUR_VALUE>
 snetAddressPrefix=<YOUR_VALUE>
@@ -74,7 +75,22 @@ az deployment sub create --location $location -f ./main.bicep --parameters name=
   -c
 ```
 
+## Destroy
+
+```sh
+# remove the session host from the host pool
+az group delete -n rg-$name -y
+az network vnet peering delete -n vn-adds_to_vn-$name -g rg-adds --vnet-name vn-adds
+```
+
 ## Resources
 
 - https://github.com/Azure/bicep/blob/main/docs/cicd-with-bicep.md
 - https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/bicep-modules
+- https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/loop-resources#resource-iteration-with-condition
+
+## Notes
+
+The `Microsoft.DesktopVirtualization` namespace isn't well documented yet in https://docs.microsoft.com/en-us/azure/templates/, so I recommend you reference the REST API docs to determine which API versions you should be using https://docs.microsoft.com/en-us/rest/api/desktopvirtualization/.
+
+Common VM extension error messages: https://docs.microsoft.com/en-us/troubleshoot/azure/virtual-machines/error-messages

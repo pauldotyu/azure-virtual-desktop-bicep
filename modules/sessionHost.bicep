@@ -1,6 +1,7 @@
 param name string
 param tags object
 param location string
+param count int
 param vnetId string
 param subnetName string
 param localAdminName string
@@ -20,11 +21,14 @@ param domainPassword string
 param domainJoinOptions int = 3
 param ouPath string
 param installNVidiaGPUDriver bool = false
-param hostPoolName string
-param hostPoolToken string
 
-resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = {
-  name: 'nic-${name}'
+// Retrieve the host pool info to pass into the module that builds session hosts. These values will be used when invoking the VM extension to install AVD agents
+resource hostPoolToken 'Microsoft.DesktopVirtualization/hostPools@2021-01-14-preview' existing = {
+  name: 'hp-${name}'
+}
+
+resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = [for i in range(0, count): {
+  name: 'nic-${name}-${i + 1}'
   location: location
   tags: tags
   properties: {
@@ -40,15 +44,15 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = {
       }
     ]
   }
-}
+}]
 
-resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = {
-  name: 'vm${name}'
+resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in range(0, count): {
+  name: 'vm${name}-${i + 1}'
   location: location
   tags: tags
   properties: {
     osProfile: {
-      computerName: 'vm${name}'
+      computerName: 'vm${name}-${i + 1}'
       adminUsername: localAdminName
       adminPassword: localAdminPassword
     }
@@ -73,15 +77,19 @@ resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = {
           properties: {
             primary: true
           }
-          id: networkInterface.id
+          id: networkInterface[i].id
         }
       ]
     }
   }
-}
 
-resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = {
-  name: '${sessionHost.name}/JoinDomain'
+  dependsOn: [
+    networkInterface[i]
+  ]
+}]
+
+resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
+  name: '${sessionHost[i].name}/JoinDomain'
   location: location
   tags: tags
   properties: {
@@ -100,10 +108,14 @@ resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@202
       password: domainPassword
     }
   }
-}
 
-resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = {
-  name: '${sessionHost.name}/AvdAgentInstall'
+  dependsOn: [
+    sessionHost[i]
+  ]
+}]
+
+resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
+  name: '${sessionHost[i].name}/AddSessionHost'
   location: location
   tags: tags
   properties: {
@@ -115,17 +127,19 @@ resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-
       modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_3-10-2021.zip'
       configurationFunction: 'Configuration.ps1\\AddSessionHost'
       properties: {
-        HostPoolName: hostPoolName
+        HostPoolName: hostPoolToken.name
+        RegistrationInfoToken: hostPoolToken.properties.registrationInfo.token
       }
     }
-    protectedSettings: {
-      registrationInfoToken: hostPoolToken
-    }
   }
-}
 
-resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = if (installNVidiaGPUDriver) {
-  name: '${sessionHost.name}/NvidiaGpuDriverWindows'
+  dependsOn: [
+    sessionHostDomainJoin[i]
+  ]
+}]
+
+resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): if (installNVidiaGPUDriver) {
+  name: '${sessionHost[i].name}/InstallNvidiaGpuDriverWindows'
   location: location
   tags: tags
   properties: {
@@ -135,4 +149,4 @@ resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020
     autoUpgradeMinorVersion: true
     settings: {}
   }
-}
+}]

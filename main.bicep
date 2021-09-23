@@ -70,6 +70,10 @@ module virtualNetworkPeering1 'modules/virtualNetworkPeering.bicep' = {
     vnetName: hubVnetName
     vnetRsourceGroupName: hubVnetRGName
   }
+
+  dependsOn: [
+    resourceGroup
+  ]
 }
 
 // Creates a VNET peering from the AVD VNET to the hub virtual network
@@ -83,6 +87,10 @@ module virtualNetworkPeering2 'modules/virtualNetworkPeering.bicep' = {
     vnetName: virtualNetwork.outputs.name
     vnetRsourceGroupName: resourceGroup.name
   }
+
+  dependsOn: [
+    resourceGroup
+  ]
 }
 
 module hostPool 'modules/hostPools.bicep' = {
@@ -125,6 +133,7 @@ module sessionHost 'modules/sessionHost.bicep' = {
     name: name
     tags: tags
     location: location
+    count: 2
     localAdminName: localAdminName
     localAdminPassword: localAdminPassword
     subnetName: snetName
@@ -134,8 +143,12 @@ module sessionHost 'modules/sessionHost.bicep' = {
     domainPassword: domainPassword
     domainUserName: domainUserName
     ouPath: ouPath
-    hostPoolName: hostPool.outputs.name
-    hostPoolToken: hostPool.outputs.token
     vnetId: virtualNetwork.outputs.id
   }
+
+  dependsOn: [
+    virtualNetworkPeering1
+    virtualNetworkPeering2
+    hostPool
+  ]
 }
