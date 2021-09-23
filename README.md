@@ -88,9 +88,11 @@ az deployment sub create --location $location -f ./main.bicep --parameters name=
 ## Destroy
 
 ```sh
-# remove the session host from the host pool
+# you might need to manually remove the session hosts from the host pool to delete the resource group
 az group delete -n rg-$name -y
-az network vnet peering delete -n vn-adds_to_vn-$name -g rg-adds --vnet-name vn-adds
+
+# delete the vnet peering from your DC vnet
+az network vnet peering delete -n <YOUR_VALUE> -g <YOUR_VALUE> --vnet-name <YOUR_VALUE>
 ```
 
 ## Resources
