@@ -1,6 +1,6 @@
 # azure-virtual-desktop-bicep
 
-> WORK IN PROGRESS BUT ENOUGH TO GET YOUR GOING 😊
+> WORK IN PROGRESS BUT ENOUGH TO GET YOU GOING 😊
 
 Running this repo requires the following:
 - Non-overlapping private IP space
