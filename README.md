@@ -2,11 +2,10 @@
 
 > WORK IN PROGRESS BUT ENOUGH TO GET YOU GOING 😊
 
+This branch will enable the Azure AD Join feature so that you do not need line of sight to an on-prem or virtualized Active Directory Domain Controller. You will need to make sure your users have been asssigned the "Virtual Machine User Login" role at the resource group level in order for them to login.
+
 Running this repo requires the following:
 - Non-overlapping private IP space
-- Domain Controller in Azure
-- Permissions to peer the AVD vnet with DC vnet
-- Domain joiner account credentials and OU path
 
 Take a look at all the required variables below, fill in the values, and flex your bicep.
 
@@ -46,42 +45,25 @@ name=$(petname --words 2 --separator "")
 echo $name
 
 # change these as needed
-name=<YOUR_VALUE>
+#name=<YOUR_VALUE>
 location=<YOUR_VALUE>
 vnetAddressPrefix=<YOUR_VALUE>
 snetAddressPrefix=<YOUR_VALUE>
-snetName=<YOUR_VALUE>
-hubVnetName=<YOUR_VALUE>
-hubVnetRGName=<YOUR_VALUE>
-hubVnetSubId=<YOUR_VALUE>
-dnsServer=<YOUR_VALUE>
+snetName=sn-$name
 localAdminName=<YOUR_VALUE>
 localAdminPassword=<YOUR_VALUE>
 vmSize=<YOUR_VALUE>
-licenseType=Windows_Client
-domainToJoin=<YOUR_VALUE>
-domainPassword=<YOUR_VALUE>
-domainUserName=<YOUR_VALUE>
-ouPath=<YOUR_VALUE>
+vmCount=<YOUR_VALUE>
 
 # deploy resources into subscription
 az deployment sub create --location $location -f ./main.bicep --parameters name=$name \
   vnetAddressPrefix=$vnetAddressPrefix \
   snetAddressPrefix=$snetAddressPrefix \
   snetName=$snetName \
-  hubVnetName=$hubVnetName \
-  hubVnetName=$hubVnetName \
-  hubVnetRGName=$hubVnetRGName \
-  hubVnetSubId=$hubVnetSubId \
-  dnsServer=$dnsServer \
   localAdminName=$localAdminName \
   localAdminPassword=$localAdminPassword \
   vmSize=$vmSize \
-  licenseType=$licenseType \
-  domainToJoin=$domainToJoin \
-  domainPassword=$domainPassword \
-  domainUserName=$domainUserName \
-  ouPath=$ouPath \
+  vmCount=$vmCount \
   -c
 ```
 
@@ -99,8 +81,10 @@ az network vnet peering delete -n <YOUR_VALUE> -g <YOUR_VALUE> --vnet-name <YOUR
 
 - https://github.com/Azure/bicep/blob/main/docs/cicd-with-bicep.md
 - https://docs.microsoft.com/en-us/azure/templates
+- https://docs.microsoft.com/en-us/azure/templates/microsoft.compute/virtualmachines?tabs=bicep
 - https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/bicep-modules
 - https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/loop-resources#resource-iteration-with-condition
+- https://catalogartifact.azureedge.net/publicartifacts/Microsoft.Hostpool-ARM-1.10.0/managedDisks-galleryvm.json
 
 ## Some notes
 

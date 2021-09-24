@@ -12,20 +12,11 @@ param tags object = {
 param vnetAddressPrefix string
 param snetAddressPrefix string
 param snetName string
-param hubVnetName string
-param hubVnetRGName string
-param hubVnetSubId string
-param dnsServer string
 param localAdminName string
 @secure()
 param localAdminPassword string
 param vmSize string
-param licenseType string
-param domainToJoin string
-param domainUserName string
-@secure()
-param domainPassword string
-param ouPath string
+param vmCount int
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-01-01' = {
   name: 'rg-${name}'
@@ -54,43 +45,8 @@ module virtualNetwork 'modules/virtualNetwork.bicep' = {
     vnetAddressPrefix: vnetAddressPrefix
     snetAddressPrefix: snetAddressPrefix
     snetName: snetName
-    dnsServer: dnsServer
     networkSecurityGroupId: networkSecurityGroup.outputs.id
   }
-}
-
-// Creates a VNET peering from the hub virtual network to the AVD VNET
-module virtualNetworkPeering1 'modules/virtualNetworkPeering.bicep' = {
-  name: 'vnetPeeringDeploy1'
-  scope: az.resourceGroup(resourceGroup.name)
-  params: {
-    remoteVnetName: virtualNetwork.outputs.name
-    remoteVnetRsourceGroupName: resourceGroup.name
-    remoteVnetSubscriptionId: subscription().id
-    vnetName: hubVnetName
-    vnetRsourceGroupName: hubVnetRGName
-  }
-
-  dependsOn: [
-    resourceGroup
-  ]
-}
-
-// Creates a VNET peering from the AVD VNET to the hub virtual network
-module virtualNetworkPeering2 'modules/virtualNetworkPeering.bicep' = {
-  name: 'vnetPeeringDeploy2'
-  scope: az.resourceGroup(hubVnetRGName)
-  params: {
-    remoteVnetName: hubVnetName
-    remoteVnetRsourceGroupName: hubVnetRGName
-    remoteVnetSubscriptionId: hubVnetSubId
-    vnetName: virtualNetwork.outputs.name
-    vnetRsourceGroupName: resourceGroup.name
-  }
-
-  dependsOn: [
-    resourceGroup
-  ]
 }
 
 module hostPool 'modules/hostPools.bicep' = {
@@ -133,22 +89,15 @@ module sessionHost 'modules/sessionHost.bicep' = {
     name: name
     tags: tags
     location: location
-    count: 2
+    count: vmCount
     localAdminName: localAdminName
     localAdminPassword: localAdminPassword
     subnetName: snetName
     vmSize: vmSize
-    licenseType: licenseType
-    domainToJoin: domainToJoin
-    domainPassword: domainPassword
-    domainUserName: domainUserName
-    ouPath: ouPath
     vnetId: virtualNetwork.outputs.id
   }
 
   dependsOn: [
-    virtualNetworkPeering1
-    virtualNetworkPeering2
     hostPool
   ]
 }

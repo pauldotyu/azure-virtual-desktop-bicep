@@ -13,13 +13,7 @@ param vmSize string
   'Windows_Server'
 ])
 param licenseType string = 'Windows_Client'
-param domainToJoin string
-param domainUserName string
-@secure()
-param domainPassword string
 @description('Set of bit flags that define the join options. Default value of 3 is a combination of NETSETUP_JOIN_DOMAIN (0x00000001) & NETSETUP_ACCT_CREATE (0x00000002) i.e. will join the domain and create the account on the domain. For more information see https://msdn.microsoft.com/en-us/library/aa392154(v=vs.85).aspx')
-param domainJoinOptions int = 3
-param ouPath string
 param installNVidiaGPUDriver bool = false
 
 // Retrieve the host pool info to pass into the module that builds session hosts. These values will be used when invoking the VM extension to install AVD agents
@@ -47,12 +41,15 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = [fo
 }]
 
 resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in range(0, count): {
-  name: 'vm${name}-${i + 1}'
+  name: 'vm${take(name, 10)}-${i + 1}'
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     osProfile: {
-      computerName: 'vm${name}-${i + 1}'
+      computerName: 'vm${take(name, 10)}-${i + 1}'
       adminUsername: localAdminName
       adminPassword: localAdminPassword
     }
@@ -88,32 +85,6 @@ resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in 
   ]
 }]
 
-resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
-  name: '${sessionHost[i].name}/JoinDomain'
-  location: location
-  tags: tags
-  properties: {
-    publisher: 'Microsoft.Compute'
-    type: 'JsonADDomainExtension'
-    typeHandlerVersion: '1.3'
-    autoUpgradeMinorVersion: true
-    settings: {
-      name: domainToJoin
-      ouPath: ouPath
-      user: domainUserName
-      restart: true
-      options: domainJoinOptions
-    }
-    protectedSettings: {
-      password: domainPassword
-    }
-  }
-
-  dependsOn: [
-    sessionHost[i]
-  ]
-}]
-
 resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
   name: '${sessionHost[i].name}/AddSessionHost'
   location: location
@@ -124,18 +95,28 @@ resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-
     typeHandlerVersion: '2.73'
     autoUpgradeMinorVersion: true
     settings: {
-      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_3-10-2021.zip'
+      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_8-16-2021.zip'
       configurationFunction: 'Configuration.ps1\\AddSessionHost'
       properties: {
-        HostPoolName: hostPoolToken.name
-        RegistrationInfoToken: hostPoolToken.properties.registrationInfo.token
+        hostPoolName: hostPoolToken.name
+        registrationInfoToken: hostPoolToken.properties.registrationInfo.token
+        aadJoin: true
       }
     }
   }
+}]
 
-  dependsOn: [
-    sessionHostDomainJoin[i]
-  ]
+// no intune support
+resource sessionHostAADLogin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
+  name: '${sessionHost[i].name}/AADLoginForWindows'
+  location: location
+  tags: tags
+  properties: {
+    publisher: 'Microsoft.Azure.ActiveDirectory'
+    type: 'AADLoginForWindows'
+    typeHandlerVersion: '1.0'
+    autoUpgradeMinorVersion: true
+  }
 }]
 
 resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): if (installNVidiaGPUDriver) {
