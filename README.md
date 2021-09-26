@@ -80,6 +80,7 @@ az network vnet peering delete -n vn-adds_to_vn-$name -g rg-adds --vnet-name vn-
 ## Resources
 
 - https://github.com/Azure/bicep/blob/main/docs/cicd-with-bicep.md
+- https://docs.microsoft.com/en-us/azure/templates
 - https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/bicep-modules
 - https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/loop-resources#resource-iteration-with-condition
 - https://docs.microsoft.com/en-us/azure/templates/
@@ -94,7 +95,7 @@ az network vnet peering delete -n vn-adds_to_vn-$name -g rg-adds --vnet-name vn-
 - https://catalogartifact.azureedge.net/publicartifacts/Microsoft.Hostpool-ARM-1.10.0/managedDisks-galleryvm.json
 - https://docs.microsoft.com/en-us/cli/azure/desktopvirtualization?view=azure-cli-latest
 
-## Notes
+## Some notes
 
 The `Microsoft.DesktopVirtualization` namespace isn't well documented yet in https://docs.microsoft.com/en-us/azure/templates/, so I recommend you reference the REST API docs to determine which API versions you should be using https://docs.microsoft.com/en-us/rest/api/desktopvirtualization/.
 
