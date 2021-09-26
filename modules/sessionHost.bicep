@@ -1,6 +1,7 @@
 param name string
 param tags object
 param location string
+param aadJoin bool
 param count int
 param vnetId string
 param subnetName string
@@ -28,7 +29,7 @@ resource hostPoolToken 'Microsoft.DesktopVirtualization/hostPools@2021-01-14-pre
 }
 
 resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = [for i in range(0, count): {
-  name: 'nic-${name}-${i + 1}'
+  name: 'nic-${take(name, 10)}-${i + 1}'
   location: location
   tags: tags
   properties: {
@@ -47,12 +48,15 @@ resource networkInterface 'Microsoft.Network/networkInterfaces@2019-07-01' = [fo
 }]
 
 resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in range(0, count): {
-  name: 'vm${name}-${i + 1}'
+  name: 'vm${take(name, 10)}-${i + 1}'
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     osProfile: {
-      computerName: 'vm${name}-${i + 1}'
+      computerName: 'vm${take(name, 10)}-${i + 1}'
       adminUsername: localAdminName
       adminPassword: localAdminPassword
     }
@@ -88,7 +92,8 @@ resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in 
   ]
 }]
 
-resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
+// Run this if we are not Azure AD joining the session hosts
+resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): if (!aadJoin) {
   name: '${sessionHost[i].name}/JoinDomain'
   location: location
   tags: tags
@@ -114,6 +119,19 @@ resource sessionHostDomainJoin 'Microsoft.Compute/virtualMachines/extensions@202
   ]
 }]
 
+// Run this if we are Azure AD joining the session hosts - no intune support
+resource sessionHostAADLogin 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): if (aadJoin) {
+  name: '${sessionHost[i].name}/AADLoginForWindows'
+  location: location
+  tags: tags
+  properties: {
+    publisher: 'Microsoft.Azure.ActiveDirectory'
+    type: 'AADLoginForWindows'
+    typeHandlerVersion: '1.0'
+    autoUpgradeMinorVersion: true
+  }
+}]
+
 resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-06-01' = [for i in range(0, count): {
   name: '${sessionHost[i].name}/AddSessionHost'
   location: location
@@ -124,11 +142,12 @@ resource sessionHostAVDAgent 'Microsoft.Compute/virtualMachines/extensions@2020-
     typeHandlerVersion: '2.73'
     autoUpgradeMinorVersion: true
     settings: {
-      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_3-10-2021.zip'
+      modulesUrl: 'https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_8-16-2021.zip'
       configurationFunction: 'Configuration.ps1\\AddSessionHost'
       properties: {
-        HostPoolName: hostPoolToken.name
-        RegistrationInfoToken: hostPoolToken.properties.registrationInfo.token
+        hostPoolName: hostPoolToken.name
+        registrationInfoToken: hostPoolToken.properties.registrationInfo.token
+        aadJoin: aadJoin
       }
     }
   }

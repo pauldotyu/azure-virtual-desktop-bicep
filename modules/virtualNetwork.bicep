@@ -7,7 +7,6 @@ param snetName string
 param networkSecurityGroupId string
 param dnsServer string
 
-//https://docs.microsoft.com/en-us/azure/templates/microsoft.network/virtualnetworks?tabs=bicep
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: 'vn-${name}'
   location: location
@@ -18,11 +17,11 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         vnetAddressPrefix
       ]
     }
-    dhcpOptions: {
+    dhcpOptions: (!empty(dnsServer) ? {
       dnsServers: [
         dnsServer
       ]
-    }
+    } : json('null'))
     subnets: [
       {
         name: snetName

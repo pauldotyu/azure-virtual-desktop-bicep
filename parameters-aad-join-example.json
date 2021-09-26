@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "tags": {
+      "value": {
+        "availability-level": "a1",
+        "environment": "prod",
+        "mission": "administrative",
+        "po-number": "zzz",
+        "protection-level": "p1",
+        "source": "pauldotyu/azure-virtual-desktop-bicep",
+        "join-type": "AAD"
+      }
+    },
+    "aadJoin": {
+      "value": true
+    },
+    "vnetAddressPrefix": {
+      "value": "10.10.0.0/16"
+    },
+    "snetAddressPrefix": {
+      "value": "10.10.0.0/24"
+    },
+    "vmSize": {
+      "value": "Standard_B2ms"
+    },
+    "vmCount": {
+      "value": 1
+    },
+    "vmLicenseType": {
+      "value": "Windows_Client"
+    }
+  }
+}

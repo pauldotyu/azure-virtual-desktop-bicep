@@ -2,30 +2,24 @@ targetScope = 'subscription'
 
 param name string
 param location string = deployment().location
-param tags object = {
-  'availability-level': 'a1'
-  'environment': 'prod'
-  'mission': 'administrative'
-  'po-number': 'zzz'
-  'protection-level': 'p1'
-}
+param tags object
+param aadJoin bool
 param vnetAddressPrefix string
 param snetAddressPrefix string
-param snetName string
-param hubVnetName string
-param hubVnetRGName string
-param hubVnetSubId string
-param dnsServer string
 param localAdminName string
 @secure()
 param localAdminPassword string
 param vmSize string
-param licenseType string
-param domainToJoin string
-param domainUserName string
+param vmCount int = 1
+param vmLicenseType string
+param hubVnetName string = ''
+param hubVnetRgName string = ''
+param dnsServer string = ''
+param domainToJoin string = ''
+param domainUserName string = ''
 @secure()
-param domainPassword string
-param ouPath string
+param domainPassword string = ''
+param ouPath string = ''
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-01-01' = {
   name: 'rg-${name}'
@@ -53,14 +47,15 @@ module virtualNetwork 'modules/virtualNetwork.bicep' = {
     location: location
     vnetAddressPrefix: vnetAddressPrefix
     snetAddressPrefix: snetAddressPrefix
-    snetName: snetName
-    dnsServer: dnsServer
+    snetName: 'sn-${name}'
+    dnsServer: (aadJoin ? '' : dnsServer)
     networkSecurityGroupId: networkSecurityGroup.outputs.id
   }
 }
 
-// Creates a VNET peering from the hub virtual network to the AVD VNET
-module virtualNetworkPeering1 'modules/virtualNetworkPeering.bicep' = {
+// Creates a VNET peering from the hub virtual network to the AVD VNET if we are AD domain joining the session hosts
+// No need for this to run if we are not AD domain joining
+module virtualNetworkPeering1 'modules/virtualNetworkPeering.bicep' = if (!aadJoin) {
   name: 'vnetPeeringDeploy1'
   scope: az.resourceGroup(resourceGroup.name)
   params: {
@@ -68,7 +63,7 @@ module virtualNetworkPeering1 'modules/virtualNetworkPeering.bicep' = {
     remoteVnetRsourceGroupName: resourceGroup.name
     remoteVnetSubscriptionId: subscription().id
     vnetName: hubVnetName
-    vnetRsourceGroupName: hubVnetRGName
+    vnetRsourceGroupName: hubVnetRgName
   }
 
   dependsOn: [
@@ -76,14 +71,15 @@ module virtualNetworkPeering1 'modules/virtualNetworkPeering.bicep' = {
   ]
 }
 
-// Creates a VNET peering from the AVD VNET to the hub virtual network
-module virtualNetworkPeering2 'modules/virtualNetworkPeering.bicep' = {
+// Creates a VNET peering from the AVD VNET to the hub VNET if we are AD Domain joining the session hosts
+// No need for this to run if we are not AD domain joining
+module virtualNetworkPeering2 'modules/virtualNetworkPeering.bicep' = if (!aadJoin) {
   name: 'vnetPeeringDeploy2'
-  scope: az.resourceGroup(hubVnetRGName)
+  scope: az.resourceGroup(hubVnetRgName)
   params: {
     remoteVnetName: hubVnetName
-    remoteVnetRsourceGroupName: hubVnetRGName
-    remoteVnetSubscriptionId: hubVnetSubId
+    remoteVnetRsourceGroupName: hubVnetRgName
+    remoteVnetSubscriptionId: subscription().id
     vnetName: virtualNetwork.outputs.name
     vnetRsourceGroupName: resourceGroup.name
   }
@@ -100,6 +96,7 @@ module hostPool 'modules/hostPools.bicep' = {
     name: name
     tags: tags
     location: location
+    aadJoin: aadJoin
     hostPoolType: 'Pooled'
   }
 }
@@ -133,12 +130,13 @@ module sessionHost 'modules/sessionHost.bicep' = {
     name: name
     tags: tags
     location: location
-    count: 2
     localAdminName: localAdminName
     localAdminPassword: localAdminPassword
-    subnetName: snetName
+    subnetName: 'sn-${name}'
     vmSize: vmSize
-    licenseType: licenseType
+    count: vmCount
+    licenseType: vmLicenseType
+    aadJoin: aadJoin
     domainToJoin: domainToJoin
     domainPassword: domainPassword
     domainUserName: domainUserName
@@ -147,8 +145,9 @@ module sessionHost 'modules/sessionHost.bicep' = {
   }
 
   dependsOn: [
-    virtualNetworkPeering1
-    virtualNetworkPeering2
+    //virtualNetworkPeering1
+    //virtualNetworkPeering2
     hostPool
   ]
 }
+
