@@ -67,7 +67,7 @@ resource sessionHost 'Microsoft.Compute/virtualMachines@2019-07-01' = [for i in 
       imageReference: {
         publisher: 'microsoftwindowsdesktop'
         offer: 'office-365'
-        sku: '20h2-evd-o365pp'
+        sku: 'win11-21h2-avd-m365'
         version: 'latest'
       }
       osDisk: {
