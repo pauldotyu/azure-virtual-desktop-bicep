@@ -22,11 +22,14 @@
     "snetAddressPrefix": {
       "value": "10.10.0.0/24"
     },
+    "maxSessionLimit": {
+      "value": 2
+    },
     "vmSize": {
       "value": "Standard_B2ms"
     },
     "vmCount": {
-      "value": 1
+      "value": 4
     },
     "vmLicenseType": {
       "value": "Windows_Client"

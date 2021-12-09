@@ -9,6 +9,7 @@ param snetAddressPrefix string
 param localAdminName string
 @secure()
 param localAdminPassword string
+param maxSessionLimit int = 999999
 param vmSize string
 param vmCount int = 1
 param vmLicenseType string
@@ -98,6 +99,7 @@ module hostPool 'modules/hostPools.bicep' = {
     location: location
     aadJoin: aadJoin
     hostPoolType: 'Pooled'
+    maxSessionLimit: maxSessionLimit
   }
 }
 

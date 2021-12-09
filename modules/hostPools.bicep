@@ -7,7 +7,7 @@ param aadJoin bool
   'Pooled'
 ])
 param hostPoolType string
-
+param maxSessionLimit int
 param baseTime string = utcNow('u')
 
 var expirationTime = dateTimeAdd(baseTime, 'PT48H')
@@ -20,7 +20,7 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2021-03-09-preview'
     hostPoolType: hostPoolType
     loadBalancerType: 'BreadthFirst'
     preferredAppGroupType: 'Desktop'
-    maxSessionLimit: 999999
+    maxSessionLimit: maxSessionLimit
     startVMOnConnect: false
     validationEnvironment: false
     customRdpProperty: 'drivestoredirect:s:*;audiomode:i:0;videoplaybackmode:i:1;redirectclipboard:i:1;redirectprinters:i:1;devicestoredirect:s:*;redirectcomports:i:1;redirectsmartcards:i:1;usbdevicestoredirect:s:*;enablecredsspsupport:i:1;use multimon:i:1;${(aadJoin ? 'targetisaadjoined:i:1' : '')}'
