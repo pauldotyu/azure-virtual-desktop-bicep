@@ -21,6 +21,12 @@ param domainUserName string = ''
 @secure()
 param domainPassword string = ''
 param ouPath string = ''
+param rbacObjectId string = ''
+@allowed([
+  'User'
+  'Group'
+])
+param rbacPrincipalType string
 
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2020-01-01' = {
   name: 'rg-${name}'
@@ -111,6 +117,8 @@ module applicationGroup 'modules/applicationGroup.bicep' = {
     tags: tags
     location: location
     hostPoolId: hostPool.outputs.id
+    rbacObjectId: rbacObjectId
+    rbacPrincipalType: rbacPrincipalType
   }
 }
 
@@ -144,6 +152,8 @@ module sessionHost 'modules/sessionHost.bicep' = {
     domainUserName: domainUserName
     ouPath: ouPath
     vnetId: virtualNetwork.outputs.id
+    rbacObjectId: rbacObjectId
+    rbacPrincipalType: rbacPrincipalType
   }
 
   dependsOn: [

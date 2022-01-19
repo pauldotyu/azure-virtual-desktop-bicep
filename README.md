@@ -5,16 +5,18 @@
 Use this repo to quickly deploy AVD in your environment. There are two options: you can choose to deploy AzureAD-Joined session hosts or deploy AD-Joined session hosts.
 
 AzureAD-Joined session hosts requires the following:
+
 - Non-overlapping private IP space
 - Permissions to grant users the "Virtual Machine User Login" role at the resource group level for to login
 
 AD-Joined session hosts requires the following:
+
 - Non-overlapping private IP space
 - Domain Controller in Azure
 - Permissions to peer the AVD vnet with DC vnet
 - Domain-joiner account credentials and OU path
 
-Depending on which option you choose, you will need to use the appropriate parameters-*.json file. There are sample values in each of these files.
+Depending on which option you choose, you will need to use the appropriate parameters-\*.json file. There are sample values in each of these files.
 
 The easiest way to get started is by cloning this repo using Azure Cloud Shell and running az cli commands in bash
 
@@ -48,7 +50,7 @@ az bicep build --file main.bicep
 # use this if you want to have some fun with petnames
 # http://manpages.ubuntu.com/manpages/bionic/man1/petname.1.html
 sudo apt-get install petname
-name=$(petname --words 2 --separator "")
+name="avd$(petname --words 1 --separator "")"
 echo $name
 
 # change these as needed

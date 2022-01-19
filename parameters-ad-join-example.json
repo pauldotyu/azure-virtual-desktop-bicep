@@ -48,6 +48,12 @@
     },
     "ouPath": {
       "value": "OU=AVD,DC=contoso,DC=fun"
+    },
+    "rbacObjectId": {
+      "value": "2b4794f4-1980-43e0-8cca-92523f6e1004"
+    },
+    "rbacPrincipalType": {
+      "value": "Group"
     }
   }
 }

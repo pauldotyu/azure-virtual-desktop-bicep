@@ -22,6 +22,8 @@ param domainPassword string
 param domainJoinOptions int = 3
 param ouPath string
 param installNVidiaGPUDriver bool = false
+param rbacObjectId string
+param rbacPrincipalType string
 
 // Retrieve the host pool info to pass into the module that builds session hosts. These values will be used when invoking the VM extension to install AVD agents
 resource hostPoolToken 'Microsoft.DesktopVirtualization/hostPools@2021-01-14-preview' existing = {
@@ -168,4 +170,19 @@ resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020
     autoUpgradeMinorVersion: true
     settings: {}
   }
+}]
+
+// Assign RBAC permissions to the session hosts - this is only needed if session hosts are AAD join is enabled
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for i in range(0, count): if (aadJoin) {
+  name: '${sessionHost[i].name}-login'
+  scope: sessionHost[i]
+  properties: {
+    roleDefinitionId: 'fb879df8-f326-4884-b1cf-06f3ad86be52' // Virtual Machine User Login
+    principalId: rbacObjectId
+    principalType: rbacPrincipalType
+  }
+
+  dependsOn: [
+    sessionHost[i]
+  ]
 }]
