@@ -172,17 +172,17 @@ resource sessionHostGPUDriver 'Microsoft.Compute/virtualMachines/extensions@2020
   }
 }]
 
-// Assign RBAC permissions to the session hosts - this is only needed if session hosts are AAD join is enabled
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for i in range(0, count): if (aadJoin) {
-  name: '${sessionHost[i].name}-login'
-  scope: sessionHost[i]
-  properties: {
-    roleDefinitionId: 'fb879df8-f326-4884-b1cf-06f3ad86be52' // Virtual Machine User Login
-    principalId: rbacObjectId
-    principalType: rbacPrincipalType
-  }
+// // Assign RBAC permissions to the session hosts - this is only needed if session hosts are AAD join is enabled
+// resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [for i in range(0, count): if (aadJoin) {
+//   name: '${sessionHost[i].name}-login'
+//   scope: sessionHost[i]
+//   properties: {
+//     roleDefinitionId: 'fb879df8-f326-4884-b1cf-06f3ad86be52' // Virtual Machine User Login
+//     principalId: rbacObjectId
+//     principalType: rbacPrincipalType
+//   }
 
-  dependsOn: [
-    sessionHost[i]
-  ]
-}]
+//   dependsOn: [
+//     sessionHost[i]
+//   ]
+// }]
