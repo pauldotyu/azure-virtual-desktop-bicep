@@ -14,7 +14,7 @@ AD-Joined session hosts requires the following:
 - Non-overlapping private IP space
 - Domain Controller in Azure
 - Permissions to peer the AVD vnet with DC vnet
-- Domain-joiner account credentials and OU path
+- Domain-joiner account credentials and OU path (use user@domain.xyz format otherwise domain join will fail)
 
 Depending on which option you choose, you will need to use the appropriate parameters-\*.json file. There are sample values in each of these files.
 
